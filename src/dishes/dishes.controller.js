@@ -74,6 +74,7 @@ function priceIsValidNumber(req, res, next){
 }
 
 
+
 /*
 "data": [
     {
@@ -101,12 +102,12 @@ function create(req, res) {
 
 function dishExists(req, res, next) {
     const { dishId } = req.params;
-    console.log("in dishExists, dishId from req.params: ", dishId);
+ //   console.log("in dishExists, dishId from req.params: ", dishId);
     const foundDish = dishes.find(dish => dish.id === dishId);
     if (foundDish) {
-        console.log("found dish: ",foundDish);
+  //      console.log("found dish: ",foundDish);
         res.locals.dish = foundDish;
-        console.log("putting the dish on res.locals: ",res.locals.dish);
+  //      console.log("putting the dish on res.locals: ",res.locals.dish);
         return next();
     }
     next({
@@ -117,7 +118,7 @@ function dishExists(req, res, next) {
 
 function update(req, res) {
     const dish = res.locals.dish;
-    console.log("in update Dish, dish from  res.locals.dish is: ",dish);
+  //  console.log("in update Dish, dish from  res.locals.dish is: ",dish);
     const { data: { name, description, price, image_url  } = {} } = req.body;
 
     // Update the paste
@@ -132,18 +133,18 @@ function update(req, res) {
 
 function read(req, res, next) {
     const dish = res.locals.dish;
-    console.log("in read, dish is: ",dish);
+ //   console.log("in read, dish is: ",dish);
     res.json({ data: dish });
 };
 
 function dishIdMatches(req,res,next){
     const { dishId } = req.params;
     const { data: { id } = {} } = req.body;
-    if((id===undefined)|| id ===dishId){
+    if((id===undefined)|| id ===dishId||(id==="")||(id===null)){
         return next();
     }
     next({
-        status: 404,
+        status: 400,
         message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}.`,
     });
 

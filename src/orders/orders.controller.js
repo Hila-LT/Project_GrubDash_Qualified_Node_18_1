@@ -32,9 +32,12 @@ function bodyDataHasNotEmpty(propertyName) {
 
 function dishesPropertyIsValid(req, res, next) {
     const { data: { dishes } = {} } = req.body;
-    if(dishes.isArray && dishes.length>0){
+    console.log("checking dishes property: ",dishes, " its length is ",dishes.length,
+        "and its type is: ", typeof dishes);
+    if (Array.isArray(dishes) && dishes.length > 0) {
         return next();
     }
+
     next({
         status: 400,
         message: `Order must include at least one dish`,
@@ -42,22 +45,41 @@ function dishesPropertyIsValid(req, res, next) {
 }
 
 
+function quantityIsValidNumber(req, res, next){
+    const { data: { dishes }  = {} } = req.body;
+    const localDishes = [...dishes];
+    let size = localDishes.length;
+    let index=0;
+    while(index<size-1){
+        if ((localDishes[index].quantity === null) || localDishes[index].quantity <= 0 || !Number.isInteger(localDishes[index].quantity)){
+            return next({
+                status: 400,
+                message: `dish ${index} must have a quantity that is an integer greater than 0`
+            });
+        }
+        index++;
+    }
+    next();
+}
 function create(req, res) {
+    console.log("what we have in create body: ",req.body);
     const { data: { deliverTo, mobileNumber, dishes } = {} } = req.body;
+    const id = nextId();
     const newOrder = {
-        id: nextId(), // Increment last id then assign as the current ID
-        deliverTo: deliverTo,
-        mobileNumber: mobileNumber,
-        dishes: dishes,
+        id, // Increment last id then assign as the current ID
+        deliverTo,
+        mobileNumber,
+        dishes,
 
     };
+    console.log("new order:", newOrder);
     orders.push(newOrder);
     res.status(201).json({ data: newOrder });
 }
 function orderIdMatches(req,res,next){
     const { orderId } = req.params;
     const { data: { id } = {} } = req.body;
-    if((id===undefined)|| id ===orderId){
+    if((id===undefined)|| id ===orderId ||(id==="")||(id===null)){
         return next();
     }
     next({
@@ -68,7 +90,8 @@ function orderIdMatches(req,res,next){
 }
 function orderExists(req, res, next) {
     const { orderId } = req.params;
-    const foundOrder = orders.find(order => order.id === Number(orderId));
+    const foundOrder = orders.find(order => order.id === orderId);
+    console.log("checking if order exists, foundorder is: ",foundOrder);
     if (foundOrder) {
         res.locals.order = foundOrder;
         return next();
@@ -85,6 +108,7 @@ function read(req, res, next) {
 
 function update(req, res) {
     const order = res.locals.order;
+    console.log("in update, order from res.locarls.order: ",order);
     const { data: { deliverTo, mobileNumber, dishes } = {} } = req.body;
 
     // update the order
@@ -97,10 +121,7 @@ function update(req, res) {
 
 function statusIsValidForUpdate(req, res, next) {
     const { data: { status } = {} } = req.body;
-
-    if (data[status]&&(data[status]!=="")) {
-        return next();
-    }
+console.log(" checking if status is valid for update, status is: ",status);
 
     const validStatus = ["pending", "preparing","out-for-delivery","delivered"];
     if (data[status]&&(data[status]!=="")&& validStatus.includes(status)) {
@@ -119,6 +140,7 @@ function statusIsValidForUpdate(req, res, next) {
 }
 function orderIsNotPending (req,res){
     const order = res.locals.order;
+    console.log("checking that order is not pending: ",order);
     if(order.status!=="Pending"){
         return next();
     }
@@ -142,6 +164,7 @@ module.exports = {
         bodyDataHasNotEmpty("mobileNumber"),
         bodyDataHasNotEmpty("dishes"),
         dishesPropertyIsValid,
+        quantityIsValidNumber,
         create
     ],
     list,
@@ -154,6 +177,7 @@ module.exports = {
         bodyDataHasNotEmpty("dishes"),
         statusIsValidForUpdate,
         dishesPropertyIsValid,
+        quantityIsValidNumber,
         update
     ],
     delete: [orderExists,orderIsNotPending, destroy],
