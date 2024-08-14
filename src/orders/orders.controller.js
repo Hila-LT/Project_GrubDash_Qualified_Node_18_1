@@ -46,11 +46,16 @@ function dishesPropertyIsValid(req, res, next) {
 
 
 function quantityIsValidNumber(req, res, next){
+    console.log("in quatity check");
     const { data: { dishes }  = {} } = req.body;
+    console.log("dishes ",dishes);
     const localDishes = [...dishes];
+    console.log("local dishes: ",localDishes);
     let size = localDishes.length;
     let index=0;
-    while(index<size-1){
+    while(index<size){
+        console.log("in quantityIsValid check, index is ",index,
+            "quantity is: ",localDishes[index].quantity)
         if ((localDishes[index].quantity === null) || localDishes[index].quantity <= 0 || !Number.isInteger(localDishes[index].quantity)){
             return next({
                 status: 400,
@@ -122,9 +127,11 @@ function update(req, res) {
 function statusIsValidForUpdate(req, res, next) {
     const { data: { status } = {} } = req.body;
 console.log(" checking if status is valid for update, status is: ",status);
+console.log("what we have in  res.locals.order ",  res.locals.order)
 
     const validStatus = ["pending", "preparing","out-for-delivery","delivered"];
-    if (data[status]&&(data[status]!=="")&& validStatus.includes(status)) {
+    if (status&&(status!=="")&& validStatus.includes(status)) {
+        console.log("status is valid");
         return next();
     }
     if(status==="delivered"){
@@ -133,6 +140,7 @@ console.log(" checking if status is valid for update, status is: ",status);
             message: `A delivered order cannot be changed`,
         });
     }
+    console.log("going to send an error about the status")
     next({
         status: 400,
         message: `Order must have a status of pending, preparing, out-for-delivery`,
