@@ -67,7 +67,6 @@ function quantityIsValidNumber(req, res, next){
     next();
 }
 function create(req, res) {
-    console.log("what we have in create body: ",req.body);
     const { data: { deliverTo, mobileNumber, dishes } = {} } = req.body;
     const id = nextId();
     const newOrder = {
@@ -88,15 +87,14 @@ function orderIdMatches(req,res,next){
         return next();
     }
     next({
-        status: 404,
-        message: `Order id does not match route id. Order: ${id}, Route: ${dishId}.`,
+        status: 400,
+        message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
     });
 
 }
 function orderExists(req, res, next) {
     const { orderId } = req.params;
     const foundOrder = orders.find(order => order.id === orderId);
-    console.log("checking if order exists, foundorder is: ",foundOrder);
     if (foundOrder) {
         res.locals.order = foundOrder;
         return next();
@@ -113,7 +111,6 @@ function read(req, res, next) {
 
 function update(req, res) {
     const order = res.locals.order;
-    console.log("in update, order from res.locarls.order: ",order);
     const { data: { deliverTo, mobileNumber, dishes } = {} } = req.body;
 
     // update the order
@@ -126,9 +123,6 @@ function update(req, res) {
 
 function statusIsValidForUpdate(req, res, next) {
     const { data: { status } = {} } = req.body;
-console.log(" checking if status is valid for update, status is: ",status);
-console.log("what we have in  res.locals.order ",  res.locals.order)
-
     const validStatus = ["pending", "preparing","out-for-delivery","delivered"];
     if (status&&(status!=="")&& validStatus.includes(status)) {
         console.log("status is valid");
@@ -140,16 +134,14 @@ console.log("what we have in  res.locals.order ",  res.locals.order)
             message: `A delivered order cannot be changed`,
         });
     }
-    console.log("going to send an error about the status")
     next({
         status: 400,
         message: `Order must have a status of pending, preparing, out-for-delivery`,
     });
 }
-function orderIsNotPending (req,res){
+function orderIsPending (req,res,next){
     const order = res.locals.order;
-    console.log("checking that order is not pending: ",order);
-    if(order.status!=="Pending"){
+    if(order.status==="pending"){
         return next();
     }
     next({
@@ -160,9 +152,10 @@ function orderIsNotPending (req,res){
 }
 function destroy(req, res) {
     const { orderId } = req.params;
-    const index = orders.findIndex((order) => order.id === Number(orderId));
+    const index = orders.findIndex((order) => order.id === orderId);
     // `splice()` returns an array of the deleted elements, even if it is one element
     const deletedOrders = orders.splice(index, 1);
+    console.log("deleted orders is: ",deletedOrders);
     res.sendStatus(204);
 }
 
@@ -188,5 +181,5 @@ module.exports = {
         quantityIsValidNumber,
         update
     ],
-    delete: [orderExists,orderIsNotPending, destroy],
+    delete: [orderExists,orderIsPending, destroy],
 };

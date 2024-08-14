@@ -155,7 +155,7 @@ function destroy(req, res) {
     console.log("dish to destroy:",dishId);
     const index = dishes.findIndex((dish) => dish.id === dishId);
     // `splice()` returns an array of the deleted elements, even if it is one element
-    const deletedPastes = dishes.splice(index, 1);
+    const deletedDishes = dishes.splice(index, 1);
     res.sendStatus(204);
 }
 module.exports = {
